@@ -1,41 +1,58 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const todoContainer = document.getElementById("ft_list");
-    const newButton = document.getElementById("newTodoButton");
+document.addEventListener("DOMContentLoaded", function () {
+    let ftList = document.getElementById("ft_list");
+    let newTaskBtn = document.getElementById("newTask");
 
-    newButton.addEventListener("click", addNewTodo);
-    loadTodos();
-
-    function addNewTodo() {
-        const todoText = prompt("Enter your new TO DO:");
-        if (todoText) {
-            createTodoElement(todoText);
-            saveTodos();
+    function loadTasks() {
+        let tasks = getCookie("todo_list");
+        if (tasks) {
+            let taskArray = JSON.parse(tasks);
+            taskArray.forEach(task => addTask(task));
         }
     }
 
-    function createTodoElement(text) {
-        const todoDiv = document.createElement("div");
-        todoDiv.innerText = text;
-        todoDiv.className = "todo-item";
-        todoDiv.addEventListener("click", () => {
-            if (confirm("Do you want to remove this TO DO?")) {
-                todoDiv.remove();
-                saveTodos();
+    function addTask(taskText) {
+        let taskDiv = document.createElement("div");
+        taskDiv.className = "todo";
+        taskDiv.innerText = taskText;
+        taskDiv.addEventListener("click", function () {
+            if (confirm("Do you want to remove this task?")) {
+                taskDiv.remove();
+                saveTasks();
             }
         });
-        todoContainer.insertBefore(todoDiv, todoContainer.firstChild);
+        ftList.insertBefore(taskDiv, ftList.firstChild);
+        saveTasks();
     }
 
-    function saveTodos() {
-        const todos = Array.from(todoContainer.children).map(todo => todo.innerText);
-        document.cookie = `todos=${JSON.stringify(todos)};path=/`; 
+    newTaskBtn.addEventListener("click", function () {
+        let taskText = prompt("Enter a new task:");
+        if (taskText) addTask(taskText);
+    });
+
+    function saveTasks() {
+        let taskElements = document.querySelectorAll(".todo");
+        let taskArray = [];
+        taskElements.forEach(task => taskArray.push(task.innerText));
+        setCookie("todo_list", JSON.stringify(taskArray), 7);
     }
 
-    function loadTodos() {
-        const cookies = document.cookie.split("; ").find(row => row.startsWith("todos="));
-        if (cookies) {
-            const todos = JSON.parse(cookies.split("=")[1]);
-            todos.forEach(todo => createTodoElement(todo));
+    function setCookie(name, value, days) {
+        let date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + "=" + value + ";expires=" + date.toUTCString() + ";path=/";
+    }
+
+    function getCookie(name) {
+        let decodedCookies = decodeURIComponent(document.cookie);
+        let cookieArray = decodedCookies.split(';');
+        for (let i = 0; i < cookieArray.length; i++) {
+            let cookie = cookieArray[i].trim();
+            if (cookie.indexOf(name + "=") === 0) {
+                return cookie.substring(name.length + 1);
+            }
         }
+        return "";
     }
+
+    loadTasks();
 });
